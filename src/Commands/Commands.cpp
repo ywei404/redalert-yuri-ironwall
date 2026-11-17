@@ -11,6 +11,38 @@
 #include "ToggleDesignatorRange.h"
 #include "SaveVariablesToFile.h"
 
+class IronWallTestCommandClass final : public CommandClass
+{
+public:
+	const char* GetName() const override
+	{
+		return "IronWallTest";
+	}
+
+	const wchar_t* GetUIName() const override
+	{
+		return L"IronWall Test";
+	}
+
+	const wchar_t* GetUICategory() const override
+	{
+		return L"IronWall";
+	}
+
+	const wchar_t* GetUIDescription() const override
+	{
+		return L"Display a message to test our custom code.";
+	}
+
+	void Execute(WWKey) const override
+	{
+		MessageListClass::Instance.PrintMessage(
+			L"IronWall: my first C++ feature!",
+			300
+		);
+	}
+};
+
 DEFINE_HOOK(0x533066, CommandClassCallback_Register, 0x6)
 {
 	// Load it after Ares'
@@ -19,6 +51,7 @@ DEFINE_HOOK(0x533066, CommandClassCallback_Register, 0x6)
 	MakeCommand<QuickSaveCommandClass>();
 	MakeCommand<ToggleDigitalDisplayCommandClass>();
 	MakeCommand<ToggleDesignatorRangeCommandClass>();
+	MakeCommand<IronWallTestCommandClass>();
 
 	if (Phobos::Config::DevelopmentCommands)
 	{
