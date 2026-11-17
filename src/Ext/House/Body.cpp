@@ -77,7 +77,10 @@ void HouseExt::ExtData::UpdateVehicleProduction()
 	{
 		auto const index = static_cast<unsigned int>(unit->Type->GetArrayIndex());
 
-		if (values[index] > 0 && unit->CanBeRecruited(pThis))
+		// IronWall: a tank in a bunker is already assigned to its defense.
+		// It can be teamless and in Guard, so CanBeRecruited alone counts
+		// it as spare manpower and wrongly cancels pending production.
+		if (values[index] > 0 && !unit->BunkerLinkedItem && unit->CanBeRecruited(pThis))
 			--values[index];
 	}
 
