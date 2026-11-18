@@ -1,4 +1,5 @@
 #include "Body.h"
+#include "IronWallAI.h"
 
 #include <Ext/Aircraft/Body.h>
 #include <Ext/Scenario/Body.h>
@@ -294,6 +295,7 @@ DEFINE_HOOK(0x4FD77C, HouseClass_ExpertAI_Superweapons, 0x5)
 DEFINE_HOOK(0x4F9038, HouseClass_AI_Superweapons, 0x5)
 {
 	GET(HouseClass*, pThis, ESI);
+	IronWallAI::UpdateHouse(pThis);
 
 	if (!RulesExt::Global()->AISuperWeaponDelay.isset() || pThis->IsControlledByHuman() || pThis->Type->MultiplayPassive)
 		return 0;
@@ -314,6 +316,29 @@ DEFINE_HOOK(0x4F9038, HouseClass_AI_Superweapons, 0x5)
 		pThis->AI_TryFireSW();
 
 	return 0;
+}
+
+// Native base construction has just found insufficient power for its next
+// building. Wait for existing bio-reactor crews before inserting another plant.
+// Original instruction at 0x4FE723: mov edx,[ebx+0x8BC] (6 bytes).
+DEFINE_HOOK(0x4FE723, HouseClass_IronWall_ReactorBeforeNewPlant, 0x6)
+{
+	GET(HouseClass*, pThis, EBP);
+	GET(BuildingTypeClass*, pNextBuilding, EDI);
+	return IronWallAI::WaitBeforeAddingPowerPlant(pThis, pNextBuilding) ? 0x4FEA48 : 0;
+}
+
+// Run before both native/Ares infantry-production calls, only when the queue
+// is empty. A relative CALL cannot be replayed from an older Syringe's cache:
+// invoke its absolute entry explicitly, then continue after the overwritten CALL.
+DEFINE_HOOK_AGAIN(0x4F9257, HouseClass_IronWall_ReactorInfantryPriority, 0x7)
+DEFINE_HOOK(0x4F9196, HouseClass_IronWall_ReactorInfantryPriority, 0x7)
+{
+	GET(HouseClass*, pThis, ESI);
+	IronWallAI::PrioritizeReactorInfantry(pThis);
+	using InfantryProduction = int (__thiscall*)(HouseClass*);
+	R->EAX(reinterpret_cast<InfantryProduction>(0x4FEEE0)(pThis));
+	return R->Origin() == 0x4F9196 ? 0x4F919D : 0x4F925E;
 }
 
 DEFINE_HOOK_AGAIN(0x4FFA99, HouseClass_ExcludeFromMultipleFactoryBonus, 0x6)

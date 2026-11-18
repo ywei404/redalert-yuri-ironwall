@@ -1,4 +1,5 @@
 #include "Body.h"
+#include "IronWallAI.h"
 
 #include <Ext/SWType/Body.h>
 #include <Ext/TechnoType/Body.h>
@@ -155,6 +156,8 @@ void HouseExt::ExtData::UpdateVehicleProduction()
 			this->ProducingNavalUnitTypeIndex = bestChoicesNaval[static_cast<unsigned int>(randomChoice)];
 		}
 	}
+	if (!skipGround)
+		IronWallAI::InterleaveBunkerProduction(pThis, values, creationFrames);
 }
 
 bool HouseExt::ExtData::UpdateHarvesterProduction()
@@ -1071,3 +1074,4 @@ bool HouseExt::ReachedBuildLimit(const HouseClass* pHouse, const TechnoTypeClass
 	return false;
 }
 #pragma endregion
+#include "IronWallAI.inl"
